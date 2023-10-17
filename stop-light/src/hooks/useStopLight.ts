@@ -6,15 +6,20 @@ type Light = (typeof lightsColors)[number];
 
 const DEFAULT_START_INDEX = 0;
 
-export const useStopLight = (): Light => {
+export const useStopLight = ({
+  stopLightTimers,
+}: {
+  stopLightTimers: Record<Light, number>;
+}): Light => {
   const [activeStopLightIndex, setActiveStopLightIndex] =
     useState<number>(DEFAULT_START_INDEX);
 
   const activeStopLightColor = lightsColors[activeStopLightIndex];
 
   useEffect(() => {
-    const msToWait = 1000;
-    const interval = setInterval(() => {
+    const msToWait = stopLightTimers[activeStopLightColor];
+
+    const timeout = setTimeout(() => {
       setActiveStopLightIndex((prevLightIndex) => {
         return prevLightIndex === lightsColors.length - 1
           ? DEFAULT_START_INDEX
@@ -23,9 +28,9 @@ export const useStopLight = (): Light => {
     }, msToWait);
 
     return () => {
-      clearInterval(interval);
+      clearTimeout(timeout);
     };
-  }, []);
+  }, [stopLightTimers, activeStopLightColor]);
 
   return activeStopLightColor;
 };
