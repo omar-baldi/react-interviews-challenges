@@ -10,13 +10,7 @@ const commonStopLightStyle: React.CSSProperties = {
 };
 
 function App() {
-  const activeStopLightColor = useStopLight({
-    stopLightTimers: {
-      red: 3000,
-      yellow: 1000,
-      green: 2000,
-    },
-  });
+  const activeStopLightColor = useStopLight();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
