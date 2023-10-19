@@ -28,6 +28,34 @@ function App() {
     };
   }
 
+  function moveSelectedItemsToRightGroup() {
+    const selectedItemsLeftGroup: [string, ListItem][] = [];
+
+    setLeftListGroup((prevLeftListGroup) => {
+      const updatedLeftListGroup = new Map(prevLeftListGroup);
+
+      [...updatedLeftListGroup].forEach((listItem) => {
+        const [id, { checked, label }] = listItem;
+
+        if (checked) {
+          selectedItemsLeftGroup.push([id, { checked: false, label }]);
+          updatedLeftListGroup.delete(id);
+        }
+      });
+
+      return updatedLeftListGroup;
+    });
+
+    setRightListGroup((prevRightListGroup) => {
+      const updatedLeftListGroup = new Map([
+        ...prevRightListGroup,
+        ...selectedItemsLeftGroup,
+      ]);
+
+      return updatedLeftListGroup;
+    });
+  }
+
   useEffect(() => {
     const defaultAmountItems = 4;
     const initialLeftGroupState = new Map(
@@ -49,12 +77,13 @@ function App() {
   }, []);
 
   return (
-    <div style={{ display: 'flex', gap: '3rem' }}>
+    <div style={{ display: 'flex', gap: '3rem', alignItems: 'center' }}>
       <div
         style={{
           border: '1px solid',
           borderRadius: '5px',
-          width: '200px',
+          minWidth: '200px',
+          minHeight: '300px',
           padding: '2rem 0',
           display: 'flex',
           flexDirection: 'column',
@@ -69,19 +98,25 @@ function App() {
                 type='checkbox'
                 name={`checkbox-${id}`}
                 checked={checked}
-                onChange={updateCheckboxCheckedValue(id, 'RIGHT')}
+                onChange={updateCheckboxCheckedValue(id, 'LEFT')}
               />
             </div>
           );
         })}
       </div>
 
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <button>{`<`}</button>
+        <button onClick={moveSelectedItemsToRightGroup}>{`>`}</button>
+      </div>
+
       <div
         style={{
           border: '1px solid',
           borderRadius: '5px',
-          width: '200px',
-          padding: '10rem 0',
+          minWidth: '200px',
+          minHeight: '300px',
+          padding: '2rem 0',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.5rem',
