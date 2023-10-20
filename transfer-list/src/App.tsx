@@ -76,6 +76,9 @@ function App() {
     };
   }, []);
 
+  const isTransferToLeftGroupButtonDisabled = rightListGroup.size <= 0;
+  const isTransferToRightGroupButtonDisabled = leftListGroup.size <= 0;
+
   return (
     <div style={{ display: 'flex', gap: '3rem', alignItems: 'center' }}>
       <div
@@ -106,8 +109,14 @@ function App() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <button onClick={() => moveSelectedItemsToGroup('LEFT')}>{`<`}</button>
-        <button onClick={() => moveSelectedItemsToGroup('RIGHT')}>{`>`}</button>
+        <button
+          disabled={isTransferToLeftGroupButtonDisabled}
+          onClick={() => moveSelectedItemsToGroup('LEFT')}
+        >{`<`}</button>
+        <button
+          disabled={isTransferToRightGroupButtonDisabled}
+          onClick={() => moveSelectedItemsToGroup('RIGHT')}
+        >{`>`}</button>
       </div>
 
       <div
