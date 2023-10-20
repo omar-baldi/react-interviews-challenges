@@ -28,31 +28,31 @@ function App() {
     };
   }
 
-  function moveSelectedItemsToRightGroup() {
-    const selectedItemsLeftGroup: [string, ListItem][] = [];
+  function moveSelectedItemsToGroup(transferTo: 'LEFT' | 'RIGHT') {
+    const selectedItemsGroup: [string, ListItem][] = [];
 
-    setLeftListGroup((prevLeftListGroup) => {
-      const updatedLeftListGroup = new Map(prevLeftListGroup);
+    const fromGroup = transferTo === 'RIGHT' ? setLeftListGroup : setRightListGroup;
+    const toGroup = transferTo === 'RIGHT' ? setRightListGroup : setLeftListGroup;
 
-      [...updatedLeftListGroup].forEach((listItem) => {
+    fromGroup((prevFromListGroup) => {
+      const updatedFromListGroup = new Map(prevFromListGroup);
+
+      [...updatedFromListGroup].forEach((listItem) => {
         const [id, { checked, label }] = listItem;
 
         if (checked) {
-          selectedItemsLeftGroup.push([id, { checked: false, label }]);
-          updatedLeftListGroup.delete(id);
+          selectedItemsGroup.push([id, { checked: false, label }]);
+          updatedFromListGroup.delete(id);
         }
       });
 
-      return updatedLeftListGroup;
+      return updatedFromListGroup;
     });
 
-    setRightListGroup((prevRightListGroup) => {
-      const updatedLeftListGroup = new Map([
-        ...prevRightListGroup,
-        ...selectedItemsLeftGroup,
-      ]);
+    toGroup((prevToListGroup) => {
+      const updatedToListGroup = new Map([...prevToListGroup, ...selectedItemsGroup]);
 
-      return updatedLeftListGroup;
+      return updatedToListGroup;
     });
   }
 
@@ -106,8 +106,8 @@ function App() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <button>{`<`}</button>
-        <button onClick={moveSelectedItemsToRightGroup}>{`>`}</button>
+        <button onClick={() => moveSelectedItemsToGroup('LEFT')}>{`<`}</button>
+        <button onClick={() => moveSelectedItemsToGroup('RIGHT')}>{`>`}</button>
       </div>
 
       <div
