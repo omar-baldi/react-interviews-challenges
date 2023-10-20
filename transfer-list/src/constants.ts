@@ -1,0 +1,1 @@
+export const DEFAULT_AMOUNT_ITEMS_LEFT_GROUP = 5;

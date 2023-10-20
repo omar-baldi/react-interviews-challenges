@@ -1,80 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useReducer } from 'react';
 import './App.css';
+import { getInitialLeftListGroupState } from './helpers/getLeftGroupInitialState';
+import { listsGroupReducer } from './reducers/listsGroupReducer';
+import { InitialReducerState } from './types';
 
-type ListItem = {
-  label: string;
-  checked: boolean;
+const initialState: InitialReducerState = {
+  leftListGroup: getInitialLeftListGroupState(),
+  rightListGroup: new Map(),
 };
 
 function App() {
-  const [leftListGroup, setLeftListGroup] = useState<Map<string, ListItem>>(new Map());
-  const [rightListGroup, setRightListGroup] = useState<Map<string, ListItem>>(new Map());
-
-  function updateCheckboxCheckedValue(id: string, group: 'LEFT' | 'RIGHT') {
-    return function (e: React.ChangeEvent<HTMLInputElement>) {
-      const updatedCheckedValue = e.target.checked;
-      const updateList = group === 'LEFT' ? setLeftListGroup : setRightListGroup;
-
-      updateList((prevListGroup) => {
-        const previousItemValues = prevListGroup.get(id);
-
-        return typeof previousItemValues === 'undefined'
-          ? prevListGroup
-          : new Map(prevListGroup).set(id, {
-              ...previousItemValues,
-              checked: updatedCheckedValue,
-            });
-      });
-    };
-  }
-
-  function moveSelectedItemsToGroup(transferTo: 'LEFT' | 'RIGHT') {
-    const selectedItemsGroup: [string, ListItem][] = [];
-
-    const fromGroup = transferTo === 'RIGHT' ? setLeftListGroup : setRightListGroup;
-    const toGroup = transferTo === 'RIGHT' ? setRightListGroup : setLeftListGroup;
-
-    fromGroup((prevFromListGroup) => {
-      const updatedFromListGroup = new Map(prevFromListGroup);
-
-      [...updatedFromListGroup].forEach((listItem) => {
-        const [id, { checked, label }] = listItem;
-
-        if (checked) {
-          selectedItemsGroup.push([id, { checked: false, label }]);
-          updatedFromListGroup.delete(id);
-        }
-      });
-
-      return updatedFromListGroup;
-    });
-
-    toGroup((prevToListGroup) => {
-      const updatedToListGroup = new Map([...prevToListGroup, ...selectedItemsGroup]);
-
-      return updatedToListGroup;
-    });
-  }
-
-  useEffect(() => {
-    const defaultAmountItems = 4;
-    const initialLeftGroupState = new Map(
-      [...Array(defaultAmountItems)]
-        .map((_, index) => ({
-          id: `item-#${index}`,
-          label: (index + 1).toString(),
-          checked: false,
-        }))
-        .map(({ id, ...rest }) => [id, rest])
-    );
-
-    setLeftListGroup(initialLeftGroupState);
-
-    return () => {
-      setLeftListGroup(new Map());
-      setRightListGroup(new Map());
-    };
-  }, []);
+  const [{ leftListGroup, rightListGroup }, dispatch] = useReducer(
+    listsGroupReducer,
+    initialState
+  );
 
   const isTransferToLeftGroupButtonDisabled = rightListGroup.size <= 0;
   const isTransferToRightGroupButtonDisabled = leftListGroup.size <= 0;
@@ -101,7 +40,13 @@ function App() {
                 type='checkbox'
                 name={`checkbox-${id}`}
                 checked={checked}
-                onChange={updateCheckboxCheckedValue(id, 'LEFT')}
+                onChange={(e) =>
+                  dispatch({
+                    type: 'UPDATE_SINGLE_CHECKBOX_VALUE_LEFT_GROUP',
+                    id,
+                    checked: e.target.checked,
+                  })
+                }
               />
             </div>
           );
@@ -111,11 +56,11 @@ function App() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <button
           disabled={isTransferToLeftGroupButtonDisabled}
-          onClick={() => moveSelectedItemsToGroup('LEFT')}
+          onClick={() => dispatch({ type: 'MOVE_SELECTED_ITEMS_FROM_RIGHT_TO_LEFT' })}
         >{`<`}</button>
         <button
           disabled={isTransferToRightGroupButtonDisabled}
-          onClick={() => moveSelectedItemsToGroup('RIGHT')}
+          onClick={() => dispatch({ type: 'MOVE_SELECTED_ITEMS_FROM_LEFT_TO_RIGHT' })}
         >{`>`}</button>
       </div>
 
@@ -139,7 +84,13 @@ function App() {
                 type='checkbox'
                 name={`checkbox-${id}`}
                 checked={checked}
-                onChange={updateCheckboxCheckedValue(id, 'RIGHT')}
+                onChange={(e) =>
+                  dispatch({
+                    type: 'UPDATE_SINGLE_CHECKBOX_VALUE_RIGHT_GROUP',
+                    id,
+                    checked: e.target.checked,
+                  })
+                }
               />
             </div>
           );
