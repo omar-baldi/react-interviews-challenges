@@ -4,10 +4,18 @@ import './App.css';
 
 const MINUTE_IN_SECONDS = 60;
 const DEFAULT_TIMER_MINUTES_VALUE = 10;
-const DEFAULT_STARTING_TIMER = `${DEFAULT_TIMER_MINUTES_VALUE}:00`;
+
+function getTimerFormat(minutes: number, seconds = 0): string {
+  const minutesLabel = minutes.toString().padStart(2, '0');
+  const secondsLabel = seconds.toString().padStart(2, '0');
+
+  return `${minutesLabel}:${secondsLabel}`;
+}
 
 function App() {
-  const [currentTimer, setCurrentTimer] = useState<string>(DEFAULT_STARTING_TIMER);
+  const [currentTimer, setCurrentTimer] = useState<string>(() =>
+    getTimerFormat(DEFAULT_TIMER_MINUTES_VALUE)
+  );
 
   useEffect(() => {
     const msToWait = 1000;
@@ -27,11 +35,7 @@ function App() {
               : minutes - 1
             : minutes;
 
-        const updatedTimer = `${minutes.toString().padStart(2, '0')}:${seconds
-          .toString()
-          .padStart(2, '0')}`;
-
-        return updatedTimer;
+        return getTimerFormat(minutes, seconds);
       });
     }, msToWait);
 
