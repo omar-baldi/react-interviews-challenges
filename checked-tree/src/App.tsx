@@ -45,65 +45,88 @@ const initialStateArray = [
       },
     ],
   },
-  {
-    label: 'Stars',
-    checked: false,
-    children: [
-      {
-        label: 'Sun',
-        checked: false,
-        children: [
-          {
-            label: 'Sun1',
-            checked: false,
-          },
-          {
-            label: 'Sun2',
-            checked: false,
-            children: [
-              {
-                label: 'Sun2-1',
-                checked: false,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        label: 'Proxima Centauri',
-        checked: false,
-      },
-    ],
-  },
+  // {
+  //   label: 'Stars',
+  //   checked: false,
+  //   children: [
+  //     {
+  //       label: 'Sun',
+  //       checked: false,
+  //       children: [
+  //         {
+  //           label: 'Sun1',
+  //           checked: false,
+  //         },
+  //         {
+  //           label: 'Sun2',
+  //           checked: false,
+  //           children: [
+  //             {
+  //               label: 'Sun2-1',
+  //               checked: false,
+  //             },
+  //           ],
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       label: 'Proxima Centauri',
+  //       checked: false,
+  //     },
+  //   ],
+  // },
 ] as CheckboxElement[];
 
 /**
  * TODO: see followings
- * - build UI tree
- * - apply margin left to every single element in tree accordingly to nesting level
  * - implement logic to recursively iterate through the parent elements to
  * set the same checked value as the one clicked
  * - change id value to be more consistent (unique for every element)
  */
-function CheckboxTreeElement({ label, checked }: CheckboxElement) {
+function CheckboxTreeElement({
+  label,
+  checked,
+  coordinatesCheckboxElement,
+}: CheckboxElement & { coordinatesCheckboxElement: number[] }) {
+  const checkboxTreeElementStyle = {
+    marginLeft: `calc(${coordinatesCheckboxElement.length} * 1rem)`,
+    padding: '0.5rem 0',
+  } as React.CSSProperties;
+
   return (
-    <div>
-      <label htmlFor='checkbox-tree'>{label}</label>
+    <div style={checkboxTreeElementStyle}>
+      <label htmlFor='checkbox-tree'>
+        {label}-{JSON.stringify(coordinatesCheckboxElement)}
+      </label>
       <input type='checkbox' id='checkbox-tree' checked={checked} onChange={undefined} />
     </div>
   );
 }
 
-function CheckboxElementsTree({ arr }: { arr: CheckboxElement[] }) {
+function CheckboxElementsTree({
+  arr,
+  parentCheckboxElementCoordinate = [],
+}: {
+  arr: CheckboxElement[];
+  parentCheckboxElementCoordinate?: number[];
+}) {
   return (
     <div style={{ textAlign: 'start' }}>
       {arr.map((v, index) => {
+        const checkboxCoordinates = [...parentCheckboxElementCoordinate, index];
+
         return (
           <React.Fragment key={`checkbox-group-#${index}`}>
-            <CheckboxTreeElement {...v} />
+            <CheckboxTreeElement
+              {...v}
+              coordinatesCheckboxElement={checkboxCoordinates}
+            />
 
             {Array.isArray(v.children) && v.children.length > 0 && (
-              <CheckboxElementsTree arr={v.children} />
+              <CheckboxElementsTree
+                arr={v.children}
+                parentCheckboxElementCoordinate={checkboxCoordinates}
+              />
             )}
           </React.Fragment>
         );
