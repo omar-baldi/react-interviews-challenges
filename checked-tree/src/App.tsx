@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
 type CheckboxElement = {
@@ -82,12 +82,20 @@ const initialStateArray = [
  * - implement logic to recursively iterate through the parent elements to
  * set the same checked value as the one clicked
  * - change id value to be more consistent (unique for every element)
+ * - implement logic to set to unchecked all children elements
+ * when parent is unchecked
  */
 function CheckboxTreeElement({
   label,
   checked,
   coordinatesCheckboxElement,
-}: CheckboxElement & { coordinatesCheckboxElement: number[] }) {
+  onCheckboxElementClick,
+}: Omit<CheckboxElement, 'children'> & {
+  coordinatesCheckboxElement: number[];
+  onCheckboxElementClick(
+    coordinatesCheckboxClicked: number[]
+  ): (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
   const checkboxTreeElementStyle = {
     marginLeft: `calc(${coordinatesCheckboxElement.length} * 1rem)`,
     padding: '0.5rem 0',
@@ -98,7 +106,12 @@ function CheckboxTreeElement({
       <label htmlFor='checkbox-tree'>
         {label}-{JSON.stringify(coordinatesCheckboxElement)}
       </label>
-      <input type='checkbox' id='checkbox-tree' checked={checked} onChange={undefined} />
+      <input
+        type='checkbox'
+        id='checkbox-tree'
+        checked={checked}
+        onChange={onCheckboxElementClick(coordinatesCheckboxElement)}
+      />
     </div>
   );
 }
@@ -106,9 +119,13 @@ function CheckboxTreeElement({
 function CheckboxElementsTree({
   arr,
   parentCheckboxElementCoordinate = [],
+  singleCheckboxElementClick,
 }: {
   arr: CheckboxElement[];
   parentCheckboxElementCoordinate?: number[];
+  singleCheckboxElementClick(
+    coordinatesCheckboxClicked: number[]
+  ): (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div style={{ textAlign: 'start' }}>
@@ -120,12 +137,14 @@ function CheckboxElementsTree({
             <CheckboxTreeElement
               {...v}
               coordinatesCheckboxElement={checkboxCoordinates}
+              onCheckboxElementClick={singleCheckboxElementClick}
             />
 
             {Array.isArray(v.children) && v.children.length > 0 && (
               <CheckboxElementsTree
                 arr={v.children}
                 parentCheckboxElementCoordinate={checkboxCoordinates}
+                singleCheckboxElementClick={singleCheckboxElementClick}
               />
             )}
           </React.Fragment>
@@ -136,7 +155,58 @@ function CheckboxElementsTree({
 }
 
 function App() {
-  return <CheckboxElementsTree arr={initialStateArray} />;
+  const [checkboxElementsArr, setCheckboxElementsArr] =
+    useState<CheckboxElement[]>(initialStateArray);
+
+  function updateAllParentsCheckedValueRecursively(
+    arr: CheckboxElement[],
+    checkedValue: boolean,
+    coordinates: number[]
+  ): CheckboxElement[] {
+    if (coordinates.length <= 0) return arr;
+
+    const [firstCoordinate, ...restCoordinates] = coordinates;
+
+    return arr.map((v, i) => {
+      return {
+        ...v,
+        ...(i === firstCoordinate && {
+          checked: checkedValue,
+          ...(Array.isArray(v.children) &&
+            v.children.length > 0 && {
+              children: updateAllParentsCheckedValueRecursively(
+                v.children,
+                checkedValue,
+                restCoordinates
+              ),
+            }),
+        }),
+      };
+    });
+  }
+
+  function singleCheckboxElementClick(coordinatesCheckboxClicked: number[]) {
+    return function (e: React.ChangeEvent<HTMLInputElement>) {
+      const { checked: updatedCheckedValue } = e.target;
+
+      setCheckboxElementsArr((prevCheckboxElementsArr) => {
+        const updatedCheckboxesElements = updateAllParentsCheckedValueRecursively(
+          prevCheckboxElementsArr,
+          updatedCheckedValue,
+          coordinatesCheckboxClicked
+        );
+
+        return updatedCheckboxesElements;
+      });
+    };
+  }
+
+  return (
+    <CheckboxElementsTree
+      arr={checkboxElementsArr}
+      singleCheckboxElementClick={singleCheckboxElementClick}
+    />
+  );
 }
 
 export default App;
