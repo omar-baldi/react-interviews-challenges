@@ -1,27 +1,19 @@
-# React + TypeScript + Vite
+### Country-capital matching challenge
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+In the game, the player needs to match a country to its capital by clicking on appropriate buttons.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Your component should receive a data property in the following format: an object where the keys are the names of the countries and the values are the capitals of each country. (e.g: `<CountryCapitalGame data={{ "Germany": "Berlin", "Denmark": "Copenhagen" }} />`).
 
-## Expanding the ESLint configuration
+2. A button should be rendered for each country and capitals. So following the example above, we would have 4 buttons: "Germany", "Berlin", "Denmark", "Copenhagen".
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+3. The buttons should be rendered in random order.
 
-- Configure the top-level `parserOptions` property like this:
+4. Clicking a button should set its background color to blue (#4009Bff).
 
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
-```
+5. Clicking another button should remove both buttons if a correct country is associated to its capital (correct pair selected) OR set the background color to each button selected to red if a wrong pair has been selected.
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+6. Assuming the previously selected pair was wrong, clicking another button should restore the default background color of the wrong pair and set the background color of the clicked button to blue (see point number 4).
+
+7. When there are no buttons left, render a message saying: "Congratulations!".
