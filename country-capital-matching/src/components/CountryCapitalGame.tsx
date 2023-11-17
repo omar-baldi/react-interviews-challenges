@@ -49,7 +49,41 @@ export default function CountryCapitalGame({ data }: Props) {
         id: buttonClickedId,
         pairId: buttonClickedPairId,
       };
+
+      return;
     }
+
+    const prevButtonClickedId = previousButtonClicked.current.id;
+    const prevButtonClickedPairId = previousButtonClicked.current.pairId;
+
+    if (prevButtonClickedPairId === buttonClickedPairId) {
+      setButtonsMap((prevButtonsMap) => {
+        const updatedButtonsMap = new Map(prevButtonsMap);
+
+        updatedButtonsMap.delete(prevButtonClickedId);
+        updatedButtonsMap.delete(buttonClickedId);
+
+        return updatedButtonsMap;
+      });
+    } else {
+      setButtonsMap((prevButtonsMap) => {
+        const updatedButtonsMap = new Map(prevButtonsMap);
+
+        updatedButtonsMap.set(prevButtonClickedId, {
+          ...(updatedButtonsMap.get(prevButtonClickedId) as ButtonMapValue),
+          status: 'INCORRECT',
+        });
+
+        updatedButtonsMap.set(buttonClickedId, {
+          ...(updatedButtonsMap.get(buttonClickedId) as ButtonMapValue),
+          status: 'INCORRECT',
+        });
+
+        return updatedButtonsMap;
+      });
+    }
+
+    previousButtonClicked.current = null;
   }
 
   return (
@@ -58,7 +92,10 @@ export default function CountryCapitalGame({ data }: Props) {
         return (
           <button
             key={buttonId}
-            style={{ ...(status === 'SELECTED' && { backgroundColor: 'blue' }) }}
+            style={{
+              ...(status === 'SELECTED' && { backgroundColor: 'blue' }),
+              ...(status === 'INCORRECT' && { backgroundColor: 'red' }),
+            }}
             onClick={() => handleButtonClick(buttonId, pairId)}
           >
             {label}
