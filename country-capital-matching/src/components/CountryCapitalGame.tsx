@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = {
   data: Record<string, string>;
@@ -12,6 +12,7 @@ type ButtonMapValue = {
 };
 
 export default function CountryCapitalGame({ data }: Props) {
+  const previousButtonClicked = useRef<{ id: string; pairId: string } | null>(null);
   const [buttonsMap, setButtonsMap] = useState<Map<string, ButtonMapValue>>(new Map());
 
   useEffect(() => {
@@ -31,11 +32,35 @@ export default function CountryCapitalGame({ data }: Props) {
     };
   }, []);
 
+  function handleButtonClick(buttonClickedId: string, buttonClickedPairId: string) {
+    if (!previousButtonClicked.current) {
+      setButtonsMap((prevButtonsMap) => {
+        const updatedButtonsMap = new Map(prevButtonsMap);
+
+        updatedButtonsMap.set(buttonClickedId, {
+          ...(updatedButtonsMap.get(buttonClickedId) as ButtonMapValue),
+          status: 'SELECTED',
+        });
+
+        return updatedButtonsMap;
+      });
+
+      previousButtonClicked.current = {
+        id: buttonClickedId,
+        pairId: buttonClickedPairId,
+      };
+    }
+  }
+
   return (
     <div>
-      {[...buttonsMap].map(([buttonId, { label }]) => {
+      {[...buttonsMap].map(([buttonId, { label, pairId, status }]) => {
         return (
-          <button key={buttonId} onClick={undefined}>
+          <button
+            key={buttonId}
+            style={{ ...(status === 'SELECTED' && { backgroundColor: 'blue' }) }}
+            onClick={() => handleButtonClick(buttonId, pairId)}
+          >
             {label}
           </button>
         );
