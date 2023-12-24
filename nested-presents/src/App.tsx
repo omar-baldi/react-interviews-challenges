@@ -1,14 +1,16 @@
 /* eslint-disable */
 import { useEffect, useState } from 'react';
 import './App.css';
-import { generateNestedPresents, getPresentImageUrl } from './helpers/presents';
+import {
+  generateNestedPresents,
+  getPresentImageUrl,
+  hasNestedPresents,
+} from './helpers/presents';
 import { Present } from './types/presents';
 
-/**
- * TODO: add functionality to display number of nested presents on hover (tag)
- */
 function App() {
   const [presents, setPresents] = useState<Present[]>([]);
+  const hasGameFinished = presents.length <= 0;
 
   useEffect(() => {
     const initialNestedPresents = generateNestedPresents();
@@ -34,16 +36,24 @@ function App() {
     });
   }
 
+  if (hasGameFinished) return <div>Game finished!</div>;
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+    <div className='presentsWrapper'>
       {presents.map((present, index) => {
         return (
           <div
             key={`present-${present.size}-#${index}`}
-            style={{ border: '1px solid', cursor: 'pointer' }}
+            className='present'
             onClick={() => handlePresentClick(index)}
           >
             <img src={getPresentImageUrl(present.size)} alt='' />
+
+            {hasNestedPresents(present) && (
+              <div className='nestedPresentsAmountTag'>
+                {`${present.nestedPresents.length} presents`}
+              </div>
+            )}
           </div>
         );
       })}
