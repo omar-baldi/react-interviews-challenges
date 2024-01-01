@@ -1,16 +1,16 @@
-/* eslint-disable */
 import { useEffect, useRef, useState } from 'react';
 import './App.css';
-
-//TODO: move to "constants" file
-const MIN_CHECKOUT_INPUT_VALUE = 1;
-const MAX_CHECKOUT_INPUT_VALUE = 10;
-
-const mockQueueState = [[], [5], [3, 10], [], [1]];
+import {
+  DEFAULT_MS_TO_WAIT,
+  MAX_CHECKOUT_INPUT_VALUE,
+  MIN_CHECKOUT_INPUT_VALUE,
+  MOCK_QUEUE_STATE,
+} from './constants';
+import { useResumableTimer } from './hooks/useResumableTimer';
 
 function App() {
   const checkoutAmountInputRef = useRef<HTMLInputElement>(null);
-  const [_queues, setQueues] = useState<number[][]>(mockQueueState);
+  const [queues, setQueues] = useState<number[][]>(MOCK_QUEUE_STATE);
 
   //TODO: move this to "helpers"
   function getIndexQueueWithLessItems(queues: number[][]): number {
@@ -45,6 +45,7 @@ function App() {
     });
   }
 
+  //TODO: move this to "helpers" ??
   function decreaseFirstCheckoutItemByOne(): void {
     setQueues((prevQueues) => {
       const updatedQueues = [...prevQueues].map((queue) => {
@@ -58,6 +59,12 @@ function App() {
     });
   }
 
+  const { isTimerInactive, isTimerPaused, isTimerPlaying, pause, resume, start } =
+    useResumableTimer({
+      cbFunc: decreaseFirstCheckoutItemByOne,
+      msToWait: DEFAULT_MS_TO_WAIT,
+    });
+
   /**
    * !NOTE: see below consideration
    * There are certain limitations with the "setInterval" function in this context.
@@ -69,13 +76,17 @@ function App() {
    * to either "stop" or "resume" the interval.
    */
   useEffect(() => {
-    const msToWait = 1000;
-    const interval = setInterval(decreaseFirstCheckoutItemByOne, msToWait);
+    const areAllQueuesEmpty = queues.every((queue) => queue.length <= 0);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
+    //if the queues are all empty and timer is playing -> PAUSE
+    if (areAllQueuesEmpty && isTimerPlaying) return pause();
+    //if the queues are not empty and timer is pause -> RESUME
+    if (!areAllQueuesEmpty && isTimerPaused) return resume();
+    //if the queues are not empty and timer is inactive -> PLAY
+    if (!areAllQueuesEmpty && isTimerInactive) return start();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queues, isTimerInactive, isTimerPaused, isTimerPlaying]);
 
   return (
     <>

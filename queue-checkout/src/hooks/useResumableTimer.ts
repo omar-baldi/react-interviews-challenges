@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { useEffect, useRef, useState } from 'react';
+import { DEFAULT_MS_TO_WAIT } from '../constants';
 
 export type ResumableTimerProps = {
   cbFunc: () => void;
@@ -7,9 +8,6 @@ export type ResumableTimerProps = {
 };
 
 export type TimerStatus = 'INACTIVE' | 'PLAYING' | 'PAUSED';
-
-//TODO: move to "constants"
-const DEFAULT_MS_TO_WAIT = 1000;
 
 export const useResumableTimer = ({
   cbFunc,
