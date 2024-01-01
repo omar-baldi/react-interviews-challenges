@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 //TODO: move to "constants" file
@@ -12,6 +12,7 @@ function App() {
   const checkoutAmountInputRef = useRef<HTMLInputElement>(null);
   const [_queues, setQueues] = useState<number[][]>(mockQueueState);
 
+  //TODO: move this to "helpers"
   function getIndexQueueWithLessItems(queues: number[][]): number {
     //TODO: provide better variable naming
     let indexQueueLessItems = 0;
@@ -43,6 +44,28 @@ function App() {
       return updatedQueues;
     });
   }
+
+  function decreaseFirstCheckoutItemByOne(): void {
+    setQueues((prevQueues) => {
+      const updatedQueues = [...prevQueues].map((queue) => {
+        if (queue.length <= 0) return queue;
+        const [firstItem, ...rest] = queue;
+        const updatedFirstItem = firstItem - 1;
+        return updatedFirstItem <= 0 ? rest : [updatedFirstItem, ...rest];
+      });
+
+      return updatedQueues;
+    });
+  }
+
+  useEffect(() => {
+    const msToWait = 1000;
+    const interval = setInterval(decreaseFirstCheckoutItemByOne, msToWait);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <>
