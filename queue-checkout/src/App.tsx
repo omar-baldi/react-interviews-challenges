@@ -58,6 +58,16 @@ function App() {
     });
   }
 
+  /**
+   * !NOTE: see below consideration
+   * There are certain limitations with the "setInterval" function in this context.
+   * The timer should ideally be stopped when there are no items left in any of the queues.
+   * However, this presents a challenge when restarting the interval after the queues are not empty again.
+   * Placing "queues" in the dependency array would clear the interval each time the reference changes,
+   * resulting in the interval not firing if the user submits multiple forms within 1000ms.
+   * In order to fix that, we can create a custom hook around the "setInterval" logic and provide the feature
+   * to either "stop" or "resume" the interval.
+   */
   useEffect(() => {
     const msToWait = 1000;
     const interval = setInterval(decreaseFirstCheckoutItemByOne, msToWait);
