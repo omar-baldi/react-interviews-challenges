@@ -10,6 +10,7 @@ export default mergeConfig(
     plugins: [react()],
     test: {
       globals: true,
+      environment: 'happy-dom',
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
