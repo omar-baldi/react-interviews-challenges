@@ -62,4 +62,34 @@ describe('useResumableTimer', () => {
     vi.advanceTimersByTime(mockMsToWait);
     expect(spyFn).toHaveBeenCalledTimes(1);
   });
+
+  it('should callback function be executed and timer status be updated when resuming the timer', () => {
+    const spyFn = vi.fn();
+    const mockMsToWait = 1000;
+
+    const { result } = renderHook(() =>
+      useResumableTimer({
+        cbFunc: spyFn,
+        msToWait: mockMsToWait,
+      })
+    );
+
+    act(() => result.current.start());
+    expect(result.current.isTimerPlaying).toBe(true);
+    expect(result.current.isTimerPaused).toBe(false);
+    vi.advanceTimersByTime(mockMsToWait);
+    expect(spyFn).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.pause());
+    expect(result.current.isTimerPlaying).toBe(false);
+    expect(result.current.isTimerPaused).toBe(true);
+    vi.advanceTimersByTime(mockMsToWait);
+    expect(spyFn).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.resume());
+    expect(result.current.isTimerPlaying).toBe(true);
+    expect(result.current.isTimerPaused).toBe(false);
+    vi.advanceTimersByTime(mockMsToWait);
+    expect(spyFn).toHaveBeenCalledTimes(2);
+  });
 });
