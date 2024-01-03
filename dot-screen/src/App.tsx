@@ -44,6 +44,18 @@ function App() {
     }
   }
 
+  /**
+   * !NOTE: see consideration below
+   * Due to limitations in the canvas API, there is no direct method
+   * to remove individual shapes. The first approach involves clearing the entire
+   * canvas and redrawing all previously added circles, excluding the last one.
+   *
+   * -> Switching to a "div" element and using "appendChild" for circle rendering
+   * could be an alternative, offering more flexibility in managing individual elements
+   * added or/and removed.
+   *
+   * @function removeLastCircleAdded
+   */
   function removeLastCircleAdded() {
     const ctx = canvasElementRef.current?.getContext('2d');
 
