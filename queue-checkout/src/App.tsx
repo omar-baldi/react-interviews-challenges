@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import {
   DEFAULT_MS_TO_WAIT,
+  DEFAULT_QUEUES_AMOUNT,
   MAX_CHECKOUT_INPUT_VALUE,
   MIN_CHECKOUT_INPUT_VALUE,
-  MOCK_QUEUE_STATE,
 } from './constants';
 import { useResumableTimer } from './hooks/useResumableTimer';
 
 function App() {
   const checkoutAmountInputRef = useRef<HTMLInputElement>(null);
-  const [queues, setQueues] = useState<number[][]>(MOCK_QUEUE_STATE);
+  const [queues, setQueues] = useState<number[][]>(
+    [...Array(DEFAULT_QUEUES_AMOUNT)].map(() => [])
+  );
 
   //TODO: move this to "helpers"
   function getIndexQueueWithLessItems(queues: number[][]): number {
@@ -91,7 +93,15 @@ function App() {
   return (
     <>
       <form onSubmit={handleFormSubmit}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '1rem',
+            margin: '2rem 0',
+          }}
+        >
           <label htmlFor='checkoutAmount'></label>
           <input
             ref={checkoutAmountInputRef}
@@ -103,6 +113,45 @@ function App() {
           <button type='submit'>Checkout</button>
         </div>
       </form>
+
+      <div
+        style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '2rem' }}
+      >
+        {queues.map((queue, indexQueue) => {
+          return (
+            <div
+              key={`queue-${indexQueue}`}
+              style={{
+                height: '40px',
+                width: '40px',
+                border: '1px solid',
+                borderRadius: '15px',
+              }}
+            >
+              <div style={{ marginTop: 'calc(40px + 1rem)' }}>
+                {queue.map((itemCheckout, indexItem) => {
+                  return (
+                    <div
+                      key={`item-${indexItem}-#${itemCheckout}`}
+                      style={{
+                        border: '1px solid',
+                        height: '40px',
+                        width: '40px',
+                        borderRadius: '50%',
+                        margin: '0.5rem 0',
+                        display: 'grid',
+                        placeItems: 'center',
+                      }}
+                    >
+                      {itemCheckout}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }
