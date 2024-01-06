@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { useEffect, useRef, useState } from 'react';
+import { ElementRef, useEffect, useRef, useState } from 'react';
 import './App.css';
 
-//TODO: move to "helpers" and unit test this
-function isCanvasAvailable(
-  ctx: CanvasRenderingContext2D | null | undefined
-): ctx is CanvasRenderingContext2D {
-  return ctx instanceof CanvasRenderingContext2D;
+const DEFAULT_CIRCLE_RADIUS = 10;
+
+//!NOTE: check function (instanceof ok ???)
+function isDrawingElementAvailable(el: HTMLDivElement | null): el is HTMLDivElement {
+  return el instanceof HTMLDivElement;
 }
 
 //TODO: move to "types" folder
@@ -22,25 +22,44 @@ type CirclesCoordinates = {
 };
 
 function App() {
-  const canvasElementRef = useRef<HTMLCanvasElement>(null);
-  const [circlesCoordinates, setCirclesCoordinates] = useState<CirclesCoordinates>({
+  //TODO: provide better naming
+  //!NOTE: there is no need to use event listener (just append a "onClick" event to the "div")
+  const drawingElementRef = useRef<ElementRef<'div'>>(null);
+
+  //TODO: switch to "useReducer" ???
+  const [_circlesCoordinates, setCirclesCoordinates] = useState<CirclesCoordinates>({
     added: [],
     removed: [],
   });
 
-  function drawCircle(e: MouseEvent) {
-    const circleCoordinateX = e.offsetX;
-    const circleCoordinateY = e.offsetY;
-    //TODO: replace with constant variable (not magic number)
-    const circleRadius = 10;
+  function handleDrawingAreaClick(e: MouseEvent): void {
+    const drawingElement = drawingElementRef.current;
 
-    const ctx = canvasElementRef.current?.getContext('2d');
+    if (isDrawingElementAvailable(drawingElement)) {
+      const rect = drawingElement.getBoundingClientRect();
 
-    if (isCanvasAvailable(ctx)) {
-      ctx.beginPath();
-      ctx.arc(circleCoordinateX, circleCoordinateY, circleRadius, 0, 2 * Math.PI, false);
-      ctx.fillStyle = 'red';
-      ctx.fill();
+      //!NOTE: for better precision apply the following code
+      // const x = e.clientX - rect.left - DEFAULT_CIRCLE_RADIUS / 2;
+      // const y = e.clientY - rect.top - DEFAULT_CIRCLE_RADIUS / 2;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const circleElementToAdd = document.createElement('div');
+      // circleElementToAdd.classList.add("circle");
+      circleElementToAdd.style.position = 'absolute';
+      circleElementToAdd.style.top = `${y}px`;
+      circleElementToAdd.style.left = `${x}px`;
+      circleElementToAdd.style.height = `${DEFAULT_CIRCLE_RADIUS}px`;
+      circleElementToAdd.style.width = `${DEFAULT_CIRCLE_RADIUS}px`;
+      circleElementToAdd.style.backgroundColor = 'red';
+      circleElementToAdd.style.borderRadius = '50%';
+
+      drawingElement.appendChild(circleElementToAdd);
+
+      setCirclesCoordinates((prevCirclesCoordinates) => ({
+        ...prevCirclesCoordinates,
+        added: [...prevCirclesCoordinates.added, { x, y }],
+      }));
     }
   }
 
@@ -56,33 +75,21 @@ function App() {
    *
    * @function removeLastCircleAdded
    */
-  function removeLastCircleAdded() {
-    const ctx = canvasElementRef.current?.getContext('2d');
+  function removeLastCircleAdded(): void {}
 
-    if (isCanvasAvailable(ctx) && circlesCoordinates.added.length > 0) {
-      ctx.clearRect(0, 0, 1000, 500);
+  function addLastCircleRemoved(): void {}
 
-      const updatedAddedCircles = circlesCoordinates.added.slice(0, -1);
-      for (const circle of updatedAddedCircles) {
-        ctx.beginPath();
-        ctx.arc(circle.x, circle.y, 10, 0, 2 * Math.PI, false);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-      }
-
-      setCirclesCoordinates((prevCirclesCoordinates) => ({
-        ...prevCirclesCoordinates,
-        added: updatedAddedCircles,
-      }));
-    }
-  }
-
+  /**
+   * !NOTE: see comment below
+   * There might not be the need to append an eventListener
+   * to the element reference, you can just use the onClick callback
+   * property.
+   */
   useEffect(() => {
-    const canvasElement = canvasElementRef.current;
-    canvasElement?.addEventListener('click', drawCircle);
+    drawingElementRef.current?.addEventListener('click', handleDrawingAreaClick);
 
     return () => {
-      canvasElement?.removeEventListener('click', drawCircle);
+      drawingElementRef.current?.removeEventListener('click', handleDrawingAreaClick);
     };
   }, []);
 
@@ -93,20 +100,23 @@ function App() {
           display: 'flex',
           justifyContent: 'center',
           gap: '1rem',
+          margin: '1rem 0',
         }}
       >
         <button onClick={removeLastCircleAdded}>Undo</button>
-        <button onClick={undefined}>Redo</button>
+        <button onClick={addLastCircleRemoved}>Redo</button>
       </div>
 
-      <canvas
-        ref={canvasElementRef}
-        //TODO: replace magic number with constants variable
-        height={500}
-        //TODO: replace magic number with constants variable
-        width={1000}
-        style={{ border: '1px solid red', cursor: 'pointer' }}
-      />
+      <div
+        ref={drawingElementRef}
+        style={{
+          position: 'relative',
+          border: '1px solid red',
+          height: '500px',
+          width: '1000px',
+          cursor: 'pointer',
+        }}
+      ></div>
     </>
   );
 }
