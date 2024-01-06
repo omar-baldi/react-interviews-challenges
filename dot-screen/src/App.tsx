@@ -26,17 +26,29 @@ type CirclesCoordinates = {
  * !NOTE: ...the element ref needs to be instance of HTMLDivElement, so...
  * !NOTE: ...it makes sense then to move the logic out to follow DRY principle
  */
+
+/**
+ * !NOTE: see consideration below
+ * Due to limitations in the canvas API, there is no direct method
+ * to remove individual shapes. The first approach involves clearing the entire
+ * canvas and redrawing all previously added circles, excluding the last one.
+ *
+ * -> Switching to a "div" element and using "appendChild" for circle rendering
+ * could be an alternative, offering more flexibility in managing individual elements
+ * added or/and removed.
+ */
 function App() {
   //TODO: provide better naming
   //!NOTE: there is no need to use event listener (just append a "onClick" event to the "div")
   const drawingElementRef = useRef<ElementRef<'div'>>(null);
 
   //TODO: switch to "useReducer" ???
-  const [circlesCoordinates, setCirclesCoordinates] = useState<CirclesCoordinates>({
+  const [_circlesCoordinates, setCirclesCoordinates] = useState<CirclesCoordinates>({
     added: [],
     removed: [],
   });
 
+  //TODO: move this to "helpers"
   function createCircleElement(coordinates: CircleCoordinates): HTMLDivElement {
     const { x, y } = coordinates;
 
@@ -76,15 +88,7 @@ function App() {
   }
 
   /**
-   * !NOTE: see consideration below
-   * Due to limitations in the canvas API, there is no direct method
-   * to remove individual shapes. The first approach involves clearing the entire
-   * canvas and redrawing all previously added circles, excluding the last one.
-   *
-   * -> Switching to a "div" element and using "appendChild" for circle rendering
-   * could be an alternative, offering more flexibility in managing individual elements
-   * added or/and removed.
-   *
+   * @description
    * @function removeLastCircleAdded
    */
   function removeLastCircleAdded(): void {
@@ -98,20 +102,43 @@ function App() {
         if (prevCirclesCoordinates.added.length <= 0) return prevCirclesCoordinates;
 
         const { added, removed } = prevCirclesCoordinates;
-
-        const updatedAddedElements = [...added];
-        const circleToRemove = updatedAddedElements.pop() as CircleCoordinates;
-        const updatedRemovedElements = [...removed, circleToRemove];
+        const updatedAdded = [...added];
+        const circleCoordinatesToRemove = updatedAdded.pop() as CircleCoordinates;
 
         return {
-          added: updatedAddedElements,
-          removed: updatedRemovedElements,
+          added: updatedAdded,
+          removed: [...removed, circleCoordinatesToRemove],
         };
       });
     }
   }
 
-  function addLastCircleRemoved(): void {}
+  /**
+   * @description
+   * @function restoreLastCircleRemoved
+   */
+  function restoreLastCircleRemoved(): void {
+    const el = drawingElementRef.current;
+
+    if (isDrawingElementAvailable(el)) {
+      setCirclesCoordinates((prevCirclesCoordinates) => {
+        if (prevCirclesCoordinates.removed.length <= 0) return prevCirclesCoordinates;
+
+        const { added, removed } = prevCirclesCoordinates;
+        const updatedRemoved = [...removed];
+        const circleCoordinatesToRestore = updatedRemoved.pop() as CircleCoordinates;
+
+        //remove element from DOM
+        const circleElementToRestore = createCircleElement(circleCoordinatesToRestore);
+        el.appendChild(circleElementToRestore);
+
+        return {
+          added: [...added, circleCoordinatesToRestore],
+          removed: updatedRemoved,
+        };
+      });
+    }
+  }
 
   /**
    * !NOTE: see comment below
@@ -138,7 +165,7 @@ function App() {
         }}
       >
         <button onClick={removeLastCircleAdded}>Undo</button>
-        <button onClick={addLastCircleRemoved}>Redo</button>
+        <button onClick={restoreLastCircleRemoved}>Redo</button>
       </div>
 
       <div
