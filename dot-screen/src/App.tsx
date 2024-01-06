@@ -21,18 +21,39 @@ type CirclesCoordinates = {
   removed: CircleCoordinates[];
 };
 
+/**
+ * !NOTE: all the functions are dependant on the fact that...
+ * !NOTE: ...the element ref needs to be instance of HTMLDivElement, so...
+ * !NOTE: ...it makes sense then to move the logic out to follow DRY principle
+ */
 function App() {
   //TODO: provide better naming
   //!NOTE: there is no need to use event listener (just append a "onClick" event to the "div")
   const drawingElementRef = useRef<ElementRef<'div'>>(null);
 
   //TODO: switch to "useReducer" ???
-  const [_circlesCoordinates, setCirclesCoordinates] = useState<CirclesCoordinates>({
+  const [circlesCoordinates, setCirclesCoordinates] = useState<CirclesCoordinates>({
     added: [],
     removed: [],
   });
 
-  function handleDrawingAreaClick(e: MouseEvent): void {
+  function createCircleElement(coordinates: CircleCoordinates): HTMLDivElement {
+    const { x, y } = coordinates;
+
+    const circleElement = document.createElement('div');
+    // circleElement.classList.add("circle");
+    circleElement.style.position = 'absolute';
+    circleElement.style.top = `${y}px`;
+    circleElement.style.left = `${x}px`;
+    circleElement.style.height = `${DEFAULT_CIRCLE_RADIUS}px`;
+    circleElement.style.width = `${DEFAULT_CIRCLE_RADIUS}px`;
+    circleElement.style.backgroundColor = 'red';
+    circleElement.style.borderRadius = '50%';
+
+    return circleElement;
+  }
+
+  function appendCircle(e: MouseEvent): void {
     const drawingElement = drawingElementRef.current;
 
     if (isDrawingElementAvailable(drawingElement)) {
@@ -44,17 +65,8 @@ function App() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const circleElementToAdd = document.createElement('div');
-      // circleElementToAdd.classList.add("circle");
-      circleElementToAdd.style.position = 'absolute';
-      circleElementToAdd.style.top = `${y}px`;
-      circleElementToAdd.style.left = `${x}px`;
-      circleElementToAdd.style.height = `${DEFAULT_CIRCLE_RADIUS}px`;
-      circleElementToAdd.style.width = `${DEFAULT_CIRCLE_RADIUS}px`;
-      circleElementToAdd.style.backgroundColor = 'red';
-      circleElementToAdd.style.borderRadius = '50%';
-
-      drawingElement.appendChild(circleElementToAdd);
+      const circleElement = createCircleElement({ x, y });
+      drawingElement.appendChild(circleElement);
 
       setCirclesCoordinates((prevCirclesCoordinates) => ({
         ...prevCirclesCoordinates,
@@ -75,7 +87,29 @@ function App() {
    *
    * @function removeLastCircleAdded
    */
-  function removeLastCircleAdded(): void {}
+  function removeLastCircleAdded(): void {
+    const el = drawingElementRef.current;
+
+    if (isDrawingElementAvailable(el) && el.children.length > 0) {
+      const lastCircleAdded = el.children[el.children.length - 1];
+      el.removeChild(lastCircleAdded);
+
+      setCirclesCoordinates((prevCirclesCoordinates) => {
+        if (prevCirclesCoordinates.added.length <= 0) return prevCirclesCoordinates;
+
+        const { added, removed } = prevCirclesCoordinates;
+
+        const updatedAddedElements = [...added];
+        const circleToRemove = updatedAddedElements.pop() as CircleCoordinates;
+        const updatedRemovedElements = [...removed, circleToRemove];
+
+        return {
+          added: updatedAddedElements,
+          removed: updatedRemovedElements,
+        };
+      });
+    }
+  }
 
   function addLastCircleRemoved(): void {}
 
@@ -86,10 +120,10 @@ function App() {
    * property.
    */
   useEffect(() => {
-    drawingElementRef.current?.addEventListener('click', handleDrawingAreaClick);
+    drawingElementRef.current?.addEventListener('click', appendCircle);
 
     return () => {
-      drawingElementRef.current?.removeEventListener('click', handleDrawingAreaClick);
+      drawingElementRef.current?.removeEventListener('click', appendCircle);
     };
   }, []);
 
