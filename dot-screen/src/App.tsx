@@ -1,13 +1,8 @@
 /* eslint-disable */
-import React, { useReducer } from 'react';
+import React from 'react';
 import './App.css';
 import { DEFAULT_CIRCLE_RADIUS } from './constants';
-import { CircleCoordinates, CirclesCoordinates } from './types';
-
-const initialReducerState = {
-  added: [],
-  removed: [],
-} as CirclesCoordinates;
+import { useCoordinatesHandler } from './hooks/useCoordinatesHandler';
 
 /**
  * !NOTE: see consideration below
@@ -20,69 +15,15 @@ const initialReducerState = {
  * added or/and removed.
  */
 function App() {
-  const [coordinates, updateCoordinates] = useReducer(
-    (
-      state: typeof initialReducerState,
-      updatedState: Partial<typeof initialReducerState>
-    ) => {
-      return {
-        ...state,
-        ...updatedState,
-      };
-    },
-    initialReducerState
-  );
+  const {
+    circleCoordinates,
+    drawCircle,
+    removeLastCircleAdded,
+    restoreLastCircleRemoved,
+  } = useCoordinatesHandler();
 
-  const isUndoButtonDisabled = coordinates.added.length <= 0;
-  const isRedoButtonDisabled = coordinates.removed.length <= 0;
-
-  function appendCircle(e: React.MouseEvent<HTMLDivElement>): void {
-    const drawingAreaElement = e.currentTarget;
-    const rect = drawingAreaElement.getBoundingClientRect();
-
-    const x = e.clientX - rect.left - DEFAULT_CIRCLE_RADIUS / 2;
-    const y = e.clientY - rect.top - DEFAULT_CIRCLE_RADIUS / 2;
-
-    updateCoordinates({
-      added: [...coordinates.added, { x, y }],
-    });
-  }
-
-  /**
-   * @description
-   * @function removeLastCircleAdded
-   */
-  function removeLastCircleAdded(): void {
-    const { added, removed } = coordinates;
-
-    if (added.length <= 0) return;
-
-    const updatedAdded = [...added];
-    const circleCoordinatesToRemove = updatedAdded.pop() as CircleCoordinates;
-
-    updateCoordinates({
-      added: updatedAdded,
-      removed: [...removed, circleCoordinatesToRemove],
-    });
-  }
-
-  /**
-   * @description
-   * @function restoreLastCircleRemoved
-   */
-  function restoreLastCircleRemoved(): void {
-    const { added, removed } = coordinates;
-
-    if (removed.length <= 0) return;
-
-    const updatedRemoved = [...removed];
-    const circleCoordinatesToRestore = updatedRemoved.pop() as CircleCoordinates;
-
-    updateCoordinates({
-      added: [...added, circleCoordinatesToRestore],
-      removed: updatedRemoved,
-    });
-  }
+  const isUndoButtonDisabled = circleCoordinates.added.length <= 0;
+  const isRedoButtonDisabled = circleCoordinates.removed.length <= 0;
 
   return (
     <>
@@ -94,18 +35,27 @@ function App() {
           margin: '1rem 0',
         }}
       >
-        <button disabled={isUndoButtonDisabled} onClick={removeLastCircleAdded}>
+        <button
+          data-testid='buttonUndo'
+          disabled={isUndoButtonDisabled}
+          onClick={removeLastCircleAdded}
+        >
           Undo
         </button>
-        <button disabled={isRedoButtonDisabled} onClick={restoreLastCircleRemoved}>
+        <button
+          data-testid='buttonRedo'
+          disabled={isRedoButtonDisabled}
+          onClick={restoreLastCircleRemoved}
+        >
           Redo
         </button>
       </div>
 
-      <div className='drawingArea' onClick={appendCircle}>
-        {coordinates.added.map(({ x, y }) => {
+      <div className='drawingArea' data-testid='drawingArea' onClick={drawCircle}>
+        {circleCoordinates.added.map(({ x, y }) => {
           return (
             <div
+              data-testid='circle'
               className='circle'
               key={`x-${x}-y-${y}`}
               style={
