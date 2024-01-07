@@ -4,3 +4,21 @@
   padding: 2rem;
   text-align: center;
 }
+
+.drawingArea {
+  position: relative;
+  border: 1px solid #fff;
+  height: 500px;
+  width: 1000px;
+  cursor: pointer;
+}
+
+.circle {
+  position: absolute;
+  height: var(--circleSize);
+  width: var(--circleSize);
+  top: var(--y);
+  left: var(--x);
+  background-color: red;
+  border-radius: 50%;
+}

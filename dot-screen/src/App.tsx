@@ -1,31 +1,13 @@
 /* eslint-disable */
-import { ElementRef, useEffect, useRef, useState } from 'react';
+import React, { useReducer } from 'react';
 import './App.css';
+import { DEFAULT_CIRCLE_RADIUS } from './constants';
+import { CircleCoordinates, CirclesCoordinates } from './types';
 
-const DEFAULT_CIRCLE_RADIUS = 10;
-
-//!NOTE: check function (instanceof ok ???)
-function isDrawingElementAvailable(el: HTMLDivElement | null): el is HTMLDivElement {
-  return el instanceof HTMLDivElement;
-}
-
-//TODO: move to "types" folder
-type CircleCoordinates = {
-  x: number;
-  y: number;
-};
-
-//TODO: move to "types" folder
-type CirclesCoordinates = {
-  added: CircleCoordinates[];
-  removed: CircleCoordinates[];
-};
-
-/**
- * !NOTE: all the functions are dependant on the fact that...
- * !NOTE: ...the element ref needs to be instance of HTMLDivElement, so...
- * !NOTE: ...it makes sense then to move the logic out to follow DRY principle
- */
+const initialReducerState = {
+  added: [],
+  removed: [],
+} as CirclesCoordinates;
 
 /**
  * !NOTE: see consideration below
@@ -38,53 +20,32 @@ type CirclesCoordinates = {
  * added or/and removed.
  */
 function App() {
-  //TODO: provide better naming
-  //!NOTE: there is no need to use event listener (just append a "onClick" event to the "div")
-  const drawingElementRef = useRef<ElementRef<'div'>>(null);
+  const [coordinates, updateCoordinates] = useReducer(
+    (
+      state: typeof initialReducerState,
+      updatedState: Partial<typeof initialReducerState>
+    ) => {
+      return {
+        ...state,
+        ...updatedState,
+      };
+    },
+    initialReducerState
+  );
 
-  //TODO: switch to "useReducer" ???
-  const [_circlesCoordinates, setCirclesCoordinates] = useState<CirclesCoordinates>({
-    added: [],
-    removed: [],
-  });
+  const isUndoButtonDisabled = coordinates.added.length <= 0;
+  const isRedoButtonDisabled = coordinates.removed.length <= 0;
 
-  //TODO: move this to "helpers"
-  function createCircleElement(coordinates: CircleCoordinates): HTMLDivElement {
-    const { x, y } = coordinates;
+  function appendCircle(e: React.MouseEvent<HTMLDivElement>): void {
+    const drawingAreaElement = e.currentTarget;
+    const rect = drawingAreaElement.getBoundingClientRect();
 
-    const circleElement = document.createElement('div');
-    // circleElement.classList.add("circle");
-    circleElement.style.position = 'absolute';
-    circleElement.style.top = `${y}px`;
-    circleElement.style.left = `${x}px`;
-    circleElement.style.height = `${DEFAULT_CIRCLE_RADIUS}px`;
-    circleElement.style.width = `${DEFAULT_CIRCLE_RADIUS}px`;
-    circleElement.style.backgroundColor = 'red';
-    circleElement.style.borderRadius = '50%';
+    const x = e.clientX - rect.left - DEFAULT_CIRCLE_RADIUS / 2;
+    const y = e.clientY - rect.top - DEFAULT_CIRCLE_RADIUS / 2;
 
-    return circleElement;
-  }
-
-  function appendCircle(e: MouseEvent): void {
-    const drawingElement = drawingElementRef.current;
-
-    if (isDrawingElementAvailable(drawingElement)) {
-      const rect = drawingElement.getBoundingClientRect();
-
-      //!NOTE: for better precision apply the following code
-      // const x = e.clientX - rect.left - DEFAULT_CIRCLE_RADIUS / 2;
-      // const y = e.clientY - rect.top - DEFAULT_CIRCLE_RADIUS / 2;
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const circleElement = createCircleElement({ x, y });
-      drawingElement.appendChild(circleElement);
-
-      setCirclesCoordinates((prevCirclesCoordinates) => ({
-        ...prevCirclesCoordinates,
-        added: [...prevCirclesCoordinates.added, { x, y }],
-      }));
-    }
+    updateCoordinates({
+      added: [...coordinates.added, { x, y }],
+    });
   }
 
   /**
@@ -92,25 +53,17 @@ function App() {
    * @function removeLastCircleAdded
    */
   function removeLastCircleAdded(): void {
-    const el = drawingElementRef.current;
+    const { added, removed } = coordinates;
 
-    if (isDrawingElementAvailable(el) && el.children.length > 0) {
-      const lastCircleAdded = el.children[el.children.length - 1];
-      el.removeChild(lastCircleAdded);
+    if (added.length <= 0) return;
 
-      setCirclesCoordinates((prevCirclesCoordinates) => {
-        if (prevCirclesCoordinates.added.length <= 0) return prevCirclesCoordinates;
+    const updatedAdded = [...added];
+    const circleCoordinatesToRemove = updatedAdded.pop() as CircleCoordinates;
 
-        const { added, removed } = prevCirclesCoordinates;
-        const updatedAdded = [...added];
-        const circleCoordinatesToRemove = updatedAdded.pop() as CircleCoordinates;
-
-        return {
-          added: updatedAdded,
-          removed: [...removed, circleCoordinatesToRemove],
-        };
-      });
-    }
+    updateCoordinates({
+      added: updatedAdded,
+      removed: [...removed, circleCoordinatesToRemove],
+    });
   }
 
   /**
@@ -118,41 +71,18 @@ function App() {
    * @function restoreLastCircleRemoved
    */
   function restoreLastCircleRemoved(): void {
-    const el = drawingElementRef.current;
+    const { added, removed } = coordinates;
 
-    if (isDrawingElementAvailable(el)) {
-      setCirclesCoordinates((prevCirclesCoordinates) => {
-        if (prevCirclesCoordinates.removed.length <= 0) return prevCirclesCoordinates;
+    if (removed.length <= 0) return;
 
-        const { added, removed } = prevCirclesCoordinates;
-        const updatedRemoved = [...removed];
-        const circleCoordinatesToRestore = updatedRemoved.pop() as CircleCoordinates;
+    const updatedRemoved = [...removed];
+    const circleCoordinatesToRestore = updatedRemoved.pop() as CircleCoordinates;
 
-        //remove element from DOM
-        const circleElementToRestore = createCircleElement(circleCoordinatesToRestore);
-        el.appendChild(circleElementToRestore);
-
-        return {
-          added: [...added, circleCoordinatesToRestore],
-          removed: updatedRemoved,
-        };
-      });
-    }
+    updateCoordinates({
+      added: [...added, circleCoordinatesToRestore],
+      removed: updatedRemoved,
+    });
   }
-
-  /**
-   * !NOTE: see comment below
-   * There might not be the need to append an eventListener
-   * to the element reference, you can just use the onClick callback
-   * property.
-   */
-  useEffect(() => {
-    drawingElementRef.current?.addEventListener('click', appendCircle);
-
-    return () => {
-      drawingElementRef.current?.removeEventListener('click', appendCircle);
-    };
-  }, []);
 
   return (
     <>
@@ -164,20 +94,31 @@ function App() {
           margin: '1rem 0',
         }}
       >
-        <button onClick={removeLastCircleAdded}>Undo</button>
-        <button onClick={restoreLastCircleRemoved}>Redo</button>
+        <button disabled={isUndoButtonDisabled} onClick={removeLastCircleAdded}>
+          Undo
+        </button>
+        <button disabled={isRedoButtonDisabled} onClick={restoreLastCircleRemoved}>
+          Redo
+        </button>
       </div>
 
-      <div
-        ref={drawingElementRef}
-        style={{
-          position: 'relative',
-          border: '1px solid red',
-          height: '500px',
-          width: '1000px',
-          cursor: 'pointer',
-        }}
-      ></div>
+      <div className='drawingArea' onClick={appendCircle}>
+        {coordinates.added.map(({ x, y }) => {
+          return (
+            <div
+              className='circle'
+              key={`x-${x}-y-${y}`}
+              style={
+                {
+                  '--circleSize': `${DEFAULT_CIRCLE_RADIUS}px`,
+                  '--x': `${x}px`,
+                  '--y': `${y}px`,
+                } as React.CSSProperties
+              }
+            />
+          );
+        })}
+      </div>
     </>
   );
 }
