@@ -42,5 +42,27 @@ describe('App', () => {
       const buttonUndo = await wrapper.queryByTestId('buttonUndo');
       expect(buttonUndo).not.toBeDisabled();
     });
+
+    describe('When clicking on undo button to delete circle previously added', () => {
+      beforeEach(() => {
+        const buttonUndo = wrapper.queryByTestId('buttonUndo');
+        act(() => buttonUndo?.click());
+      });
+
+      it('should decrease amount of circles rendered in the DOM', async () => {
+        const circlesElement = await wrapper.queryAllByTestId('circle');
+        expect(circlesElement.length).toBe(0);
+      });
+
+      it('should undo button be back to disabled state', async () => {
+        const buttonUndo = await wrapper.queryByTestId('buttonUndo');
+        expect(buttonUndo).toBeDisabled();
+      });
+
+      it('should redo button not be disabled anymore', async () => {
+        const buttonRedo = await wrapper.queryByTestId('buttonRedo');
+        expect(buttonRedo).not.toBeDisabled();
+      });
+    });
   });
 });
