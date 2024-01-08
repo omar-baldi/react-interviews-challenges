@@ -57,4 +57,16 @@ describe('useCoordinatesHandler', () => {
     expect(coordinatesHandlerHook.current.circleCoordinates.added.length).toBe(0);
     expect(coordinatesHandlerHook.current.circleCoordinates.removed.length).toBe(1);
   });
+
+  it('should update circles coordinates when restoring last circle removed', () => {
+    drawCircleWithMockEvent();
+
+    act(() => coordinatesHandlerHook.current.removeLastCircleAdded());
+    expect(coordinatesHandlerHook.current.circleCoordinates.added.length).toBe(0);
+    expect(coordinatesHandlerHook.current.circleCoordinates.removed.length).toBe(1);
+
+    act(() => coordinatesHandlerHook.current.restoreLastCircleRemoved());
+    expect(coordinatesHandlerHook.current.circleCoordinates.added.length).toBe(1);
+    expect(coordinatesHandlerHook.current.circleCoordinates.removed.length).toBe(0);
+  });
 });
