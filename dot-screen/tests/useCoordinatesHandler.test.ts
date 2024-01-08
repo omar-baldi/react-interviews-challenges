@@ -1,16 +1,20 @@
 /* eslint-disable */
 import { useCoordinatesHandler } from '@/hooks/useCoordinatesHandler';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, type RenderHookResult } from '@testing-library/react';
+
+type CoordinatesHandler = ReturnType<typeof useCoordinatesHandler>;
+type HookResult<T> = RenderHookResult<T, unknown>['result'];
 
 describe('useCoordinatesHandler', () => {
-  it('should initialize circle coordinates "added" and "removed" with empty arrays', () => {
+  let coordinatesHandlerHook: HookResult<CoordinatesHandler>;
+
+  beforeEach(() => {
     const { result } = renderHook(() => useCoordinatesHandler());
-    expect(result.current.circleCoordinates.added).toEqual([]);
-    expect(result.current.circleCoordinates.added).toEqual([]);
+    coordinatesHandlerHook = result;
   });
 
-  it('should update circle coordinates "added" when drawing a new circle', () => {
-    const { result } = renderHook(() => useCoordinatesHandler());
+  function drawCircleWithMockEvent() {
+    const { drawCircle } = coordinatesHandlerHook.current;
 
     const mockEvent = {
       clientX: 100,
@@ -25,7 +29,32 @@ describe('useCoordinatesHandler', () => {
       },
     } as any;
 
-    act(() => result.current.drawCircle(mockEvent));
-    expect(result.current.circleCoordinates.added.length).toBe(1);
+    return act(() => drawCircle(mockEvent));
+  }
+
+  it('should initialize circle coordinates "added" and "removed" with empty arrays', () => {
+    expect(coordinatesHandlerHook.current.circleCoordinates.added).toEqual([]);
+    expect(coordinatesHandlerHook.current.circleCoordinates.removed).toEqual([]);
+  });
+
+  it('should update circles coordinates "added" when drawing a new circle', () => {
+    drawCircleWithMockEvent();
+    expect(coordinatesHandlerHook.current.circleCoordinates.added.length).toBe(1);
+    expect(coordinatesHandlerHook.current.circleCoordinates.added).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          x: expect.any(Number),
+          y: expect.any(Number),
+        }),
+      ])
+    );
+  });
+
+  it('should update circles coordinates when removing last circle added', () => {
+    drawCircleWithMockEvent();
+
+    act(() => coordinatesHandlerHook.current.removeLastCircleAdded());
+    expect(coordinatesHandlerHook.current.circleCoordinates.added.length).toBe(0);
+    expect(coordinatesHandlerHook.current.circleCoordinates.removed.length).toBe(1);
   });
 });
