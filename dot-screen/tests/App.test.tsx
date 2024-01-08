@@ -63,6 +63,28 @@ describe('App', () => {
         const buttonRedo = await wrapper.queryByTestId('buttonRedo');
         expect(buttonRedo).not.toBeDisabled();
       });
+
+      describe('When clicking on redo button to restore circle removed', () => {
+        beforeEach(() => {
+          const buttonRedo = wrapper.queryByTestId('buttonRedo');
+          act(() => buttonRedo?.click());
+        });
+
+        it('should restore amount of circles rendered in the DOM', async () => {
+          const circlesElement = await wrapper.queryAllByTestId('circle');
+          expect(circlesElement.length).toBe(1);
+        });
+
+        it('should redo button be back to disabled state', async () => {
+          const buttonRedo = await wrapper.queryByTestId('buttonRedo');
+          expect(buttonRedo).toBeDisabled();
+        });
+
+        it('should undo button not be disabled anymore', async () => {
+          const buttonUndo = await wrapper.queryByTestId('buttonUndo');
+          expect(buttonUndo).not.toBeDisabled();
+        });
+      });
     });
   });
 });
