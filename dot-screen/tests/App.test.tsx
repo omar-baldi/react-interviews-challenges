@@ -1,7 +1,7 @@
 /* eslint-disable */
 import App from '@/App';
 import '@testing-library/jest-dom';
-import { RenderResult, render } from '@testing-library/react';
+import { RenderResult, act, render } from '@testing-library/react';
 
 describe('App', () => {
   let wrapper: RenderResult;
@@ -25,5 +25,22 @@ describe('App', () => {
     const buttonRedo = wrapper.queryByTestId('buttonRedo');
     expect(buttonRedo).toBeInTheDocument();
     expect(buttonRedo).toBeDisabled();
+  });
+
+  describe('When simulate a click in the drawing area', () => {
+    beforeEach(async () => {
+      const drawingAreaElement = await wrapper.queryByTestId('drawingArea');
+      act(() => drawingAreaElement?.click());
+    });
+
+    it('should amount of circles rendered in the DOM be updated', async () => {
+      const circlesElement = await wrapper.queryAllByTestId('circle');
+      expect(circlesElement.length).toBe(1);
+    });
+
+    it('should undo button not be disabled anymore', async () => {
+      const buttonUndo = await wrapper.queryByTestId('buttonUndo');
+      expect(buttonUndo).not.toBeDisabled();
+    });
   });
 });
